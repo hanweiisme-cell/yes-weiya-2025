@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鈺祥企業 2025 尾牙全方位系統 (智慧偵測版)</title>
+    <style>
+        /* === 共用基礎樣式 === */
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #1A237E, #0D47A1, #01579B);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 歡迎頁面 */
+        #welcomeScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 71, 161, 0.98); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; cursor: pointer; transition: opacity 0.5s;
+        }
+        #welcomeScreen h1 { font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 10px #42A5F5; }
+        #welcomeScreen p { font-size: 1.5rem; animation: blink 1.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* Logo */
+        .logo-container { margin-bottom: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center;}
+        .logo { max-width: 350px; height: auto; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); }
+        .logo-fallback { font-size: 2.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px #4FC3F7; letter-spacing: 3px; }
+
+        /* 分頁導覽列 */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; z-index: 10; }
+        .nav-btn {
+            padding: 12px 30px; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 30px;
+            cursor: pointer; transition: all 0.3s; background: rgba(255,255,255,0.2); color: #ccc;
+            border: 2px solid transparent;
+        }
+        .nav-btn.active { background: #FFD700; color: #b71c1c; box-shadow: 0 0 15px #FFD700; transform: scale(1.1); }
+        .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.4); color: white; }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 1000px; width: 95%;
+            min-height: 600px;
+        }
+
+        .view-section { display: none; animation: fadeIn 0.5s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 抽獎樣式 */
+        .raffle-layout { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .display-area-raffle {
+            width: 100%; min-height: 180px; background: #0D47A1; color: #E3F2FD;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; font-weight: bold; border-radius: 10px; margin: 10px 0;
+            border: 8px solid #42A5F5; text-align: center;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            text-shadow: 0 0 15px rgba(66, 165, 245, 0.8);
+            padding: 20px; line-height: 1.3; word-break: break-all;
+        }
+        .current-prize { font-size: 1.8rem; color: #1565C0; font-weight: bold; border-bottom: 2px solid #E3F2FD; padding-bottom: 10px; width: 100%; text-align: center; }
+        .result-list { width: 100%; max-height: 250px; overflow-y: auto; border-top: 2px solid #eee; padding-top: 10px; margin-top: 20px;}
+        .result-header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #1565C0; padding-bottom: 5px; }
+        .result-item { background: #fff; padding: 10px 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 1.1rem; }
+        .result-item:nth-child(even) { background-color: #E3F2FD; }
+
+        /* 遊戲樣式 */
+        .game-layout { text-align: center; padding: 20px; }
+        .range-display {
+            font-size: 7rem; font-weight: 900; margin: 20px 0; color: #1565C0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1); letter-spacing: 5px;
+        }
+        .game-input-area { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
+        .game-input { font-size: 2rem; padding: 10px; width: 150px; text-align: center; border: 4px solid #FFEB3B; border-radius: 10px; outline: none; }
+        .game-status-text { height: 30px; color: #d32f2f; font-size: 1.2rem; margin-top: 10px; font-weight: bold;}
+        .winner-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 50; border-radius: 20px;
+            flex-direction: column; justify-content: center; align-items: center; color: white;
+        }
+        .winner-overlay h2 { font-size: 4rem; color: #FFEB3B; margin: 0; text-shadow: 0 0 20px red; }
+
+        /* 元件 */
+        .big-btn {
+            padding: 10px 40px; font-size: 1.8rem; cursor: pointer; background: #1565C0;
+            color: white; border: none; border-radius: 50px; transition: all 0.3s;
+            box-shadow: 0 6px 10px rgba(21, 101, 192, 0.3); font-weight: bold;
+        }
+        .big-btn:hover { background: #0D47A1; transform: scale(1.05); }
+        .big-btn.rolling { background: #42A5F5; animation: pulse 0.5s infinite alternate; box-shadow: 0 0 25px #42A5F5; }
+        
+        .admin-panel { display: none; width: 100%; border-top: 2px dashed #ccc; margin-top: 20px; padding-top: 20px; gap: 20px; flex-wrap: wrap; }
+        .panel-col { flex: 1; min-width: 250px; display: flex; flex-direction: column; }
+        textarea { width: 95%; height: 150px; padding: 10px; border: 2px solid #90CAF9; border-radius: 8px; }
+        
+        .toggle-btn { position: fixed; bottom: 20px; right: 20px; background: rgba(255,255,255,0.8); padding: 10px 15px; border-radius: 20px; cursor: pointer; border: 1px solid #ccc; font-weight: bold;}
+        .music-toggle { margin-top: 10px; color: #1565C0; cursor: pointer; text-decoration: underline; font-size: 0.9rem;}
+
+        .cloud-status { margin-top: 15px; font-size: 1rem; color: #666; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; }
+        .dot { width: 12px; height: 12px; background: #ccc; border-radius: 50%; }
+        .dot.active { background: #00E676; box-shadow: 0 0 8px #00E676; animation: blinkStatus 1s infinite alternate; }
+        @keyframes blinkStatus { from { opacity: 0.6; } to { opacity: 1; } }
+        
+        /* 偵錯監控區 */
+        .debug-console {
+            width: 100%; background: #000; color: #00E676; font-family: monospace; 
+            padding: 10px; font-size: 0.8rem; height: 80px; overflow-y: auto;
+            border-radius: 5px; margin-top: 10px; display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="welcomeScreen" onclick="enterSystem()">
+        <h1>鈺祥企業 2025 尾牙系統</h1>
+        <p>🎵 點擊畫面載入音效 🎵</p>
+    </div>
+
+    <div class="logo-container">
+        <img src="logo.png" alt="鈺祥企業" class="logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'logo-fallback\'>鈺祥企業股份有限公司</div>';">
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('raffle')">💰 幸運抽獎</button>
+        <button class="nav-btn" onclick="switchTab('game')">💣 終極密碼</button>
+    </div>
+
+    <audio id="raffleBg" loop src="bg.mp3"></audio>
+    <audio id="rollSound" loop src="roll.mp3"></audio>
+    <audio id="winSound" src="win.mp3"></audio>
+    <audio id="gameBg" loop src="game_bg.mp3"></audio>
+    <audio id="beepSound" src="beep.mp3"></audio>
+    <audio id="boomSound" src="boom.mp3"></audio>
+
+    <div class="main-container">
+        
+        <div id="raffleView" class="view-section active">
+            <div class="raffle-layout">
+                <div class="current-prize" id="currentPrizeDisplay">準備抽獎</div>
+                <div class="display-area-raffle" id="display">READY</div>
+                <div style="display:flex; align-items:center; gap:10px; background:#E3F2FD; padding:5px 20px; border-radius:20px;">
+                    <label>一次抽</label>
+                    <input type="number" id="drawCount" value="1" min="1" max="100" style="width:50px; text-align:center; font-size:1.2rem; border:2px solid #1565C0; border-radius:5px;">
+                    <label>人</label>
+                </div>
+                <button id="drawBtn" class="big-btn" onclick="startDraw()">開始抽獎</button>
+                <div class="music-toggle" onclick="toggleRaffleMusic()">🔊 背景音樂開/關</div>
+                <div class="result-list" id="resultList">
+                    <div class="result-header-group">
+                        <h3 style="margin:0; color:#1565C0;">🏆 中獎名單</h3>
+                        <div>
+                            <button onclick="copyToClipboard()" style="cursor:pointer;">📋 複製</button>
+                            <button onclick="exportToExcel()" style="cursor:pointer;">📥 匯出</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameView" class="view-section">
+            <div class="game-layout">
+                <div style="color:#888; font-size:1.2rem;">目前範圍</div>
+                <div class="range-display" id="rangeDisplay">1 ~ 100</div>
+                <div class="game-status-text" id="gameMessage"></div>
+                <div class="cloud-status">
+                    <span class="dot" id="syncDot"></span>
+                    <span id="syncText">🔴 雲端自動模式：未連線</span>
+                </div>
+                <div class="game-input-area" style="opacity:0.6; transform:scale(0.9);">
+                    <input type="number" id="gameInput" class="game-input" placeholder="手動備用" onkeydown="if(event.key==='Enter') makeGuess()">
+                    <button class="big-btn" style="padding:10px 20px; font-size:1.2rem; background:#777;" onclick="makeGuess()">手動送出</button>
+                </div>
+                <div class="music-toggle" onclick="toggleGameMusic()">🔊 遊戲音樂開/關</div>
+                <div id="winnerOverlay" class="winner-overlay" onclick="closeOverlay()">
+                    <h1 style="font-size:3rem; margin-bottom:10px;">🎉 密碼爆炸！</h1>
+                    <h2 id="boomNumber">50</h2>
+                    <p style="margin-top:20px; color:#ccc;">(點擊關閉)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-panel" id="adminPanel">
+            <div class="panel-col">
+                <h4 style="color:#1565C0; margin:0 0 5px 0;">[抽獎] 名單</h4>
+                <textarea id="nameList">王小明
+李大華
+鈺祥員工...</textarea>
+                <div style="text-align:right;">人數: <span id="count">3</span></div>
+            </div>
+            <div class="panel-col">
+                <h4 style="color:#1565C0; margin:0 0 5px 0;">[抽獎] 獎項</h4>
+                <textarea id="prizeList">獎項1
+獎項2</textarea>
+            </div>
+            <div class="panel-col" style="border-left:2px dashed #ccc; padding-left:20px;">
+                <h4 style="color:#d32f2f; margin:0 0 5px 0;">[遊戲] 設定</h4>
+                <label>範圍：</label>
+                <input type="number" id="minSet" value="1" style="width:50px;"> ~ 
+                <input type="number" id="maxSet" value="100" style="width:50px;">
+                <br><br>
+                <label>🔥 指定密碼 (必填)：</label>
+                <input type="number" id="secretSet" placeholder="88" style="width:60px; font-weight:bold; color:red; font-size:1.2rem; text-align:center;">
+                <br><br>
+                <label>☁️ Google CSV 網址：</label>
+                <input type="text" id="sheetUrl" placeholder="https://docs.google.com/..." style="width:95%; padding:5px;" onchange="updateSheetUrl()">
+                <br>
+                <div class="debug-console" id="debugConsole">監控紀錄將顯示於此...</div>
+                <button onclick="resetGame()" style="background:#d32f2f; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">重置遊戲 / 套用設定</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="toggle-btn" onclick="toggleAdmin()">⚙️ 後台設定</button>
+
+    <script>
+        // === 系統基礎 ===
+        let currentTab = 'raffle';
+        const adminPanel = document.getElementById('adminPanel');
+        const debugConsole = document.getElementById('debugConsole');
+
+        const raffleBg = document.getElementById('raffleBg');
+        const rollSound = document.getElementById('rollSound');
+        const winSound = document.getElementById('winSound');
+        const gameBg = document.getElementById('gameBg');
+        const beepSound = document.getElementById('beepSound');
+        const boomSound = document.getElementById('boomSound');
+
+        raffleBg.volume = 0.3; gameBg.volume = 0.4;
+        rollSound.volume = 0.6; winSound.volume = 1.0;
+        beepSound.volume = 0.8; boomSound.volume = 1.0;
+
+        function enterSystem() {
+            document.getElementById('welcomeScreen').style.opacity = '0';
+            setTimeout(() => { document.getElementById('welcomeScreen').style.display = 'none'; }, 500);
+            raffleBg.play().then(() => { if(currentTab !== 'raffle') raffleBg.pause(); }).catch(()=>{});
+            gameBg.play().then(() => { if(currentTab !== 'game') gameBg.pause(); }).catch(()=>{});
+            playCurrentBg();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + 'View').classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            stopAllBg();
+            playCurrentBg();
+        }
+
+        function playCurrentBg() {
+            if (currentTab === 'raffle') { raffleBg.currentTime=0; raffleBg.play().catch(()=>{}); }
+            else { gameBg.currentTime=0; gameBg.play().catch(()=>{}); }
+        }
+        function stopAllBg() { raffleBg.pause(); gameBg.pause(); }
+        
+        function toggleAdmin() {
+            if (adminPanel.style.display === 'flex') {
+                adminPanel.style.display = 'none';
+            } else {
+                adminPanel.style.display = 'flex';
+                debugConsole.style.display = 'block'; // 打開監控
+                adminPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function logDebug(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugConsole.innerHTML = `[${time}] ${msg}<br>` + debugConsole.innerHTML;
+        }
+
+        // === [A] 抽獎邏輯 (精簡版) ===
+        let names=[], prizes=[], isRaffleRolling=false, raffleTimer, historyData=[];
+        const nameInput = document.getElementById('nameList');
+        const prizeInput = document.getElementById('prizeList');
+        const raffleDisplay = document.getElementById('display');
+        const countSpan = document.getElementById('count');
+        const prizeDisplay = document.getElementById('currentPrizeDisplay');
+        const drawBtn = document.getElementById('drawBtn');
+        const resultList = document.getElementById('resultList');
+
+        updateRaffleData();
+        nameInput.addEventListener('input', updateRaffleData);
+        prizeInput.addEventListener('input', updateRaffleData);
+
+        function updateRaffleData() {
+            names = nameInput.value.split('\n').filter(n=>n.trim()!=='');
+            prizes = prizeInput.value.split('\n').filter(p=>p.trim()!=='');
+            countSpan.textContent = names.length;
+            if (!isRaffleRolling) prizeDisplay.textContent = prizes.length>0 ? "準備抽出："+prizes[0] : "獎項已全數抽出！";
+        }
+
+        function toggleRaffleMusic() { if(raffleBg.paused) raffleBg.play(); else raffleBg.pause(); }
+
+        function startDraw() {
+            updateRaffleData();
+            const drawCount = parseInt(document.getElementById('drawCount').value)||1;
+            if(isRaffleRolling) {
+                clearInterval(raffleTimer); isRaffleRolling=false;
+                drawBtn.textContent="開始抽獎"; drawBtn.classList.remove('rolling');
+                rollSound.pause(); rollSound.currentTime=0;
+                let winners=[];
+                for(let i=0; i<drawCount; i++){
+                    if(names.length===0) break;
+                    let idx = Math.floor(Math.random()*names.length);
+                    winners.push(names[idx]); names.splice(idx,1);
+                }
+                raffleDisplay.textContent = winners.join('、');
+                winSound.currentTime=0; winSound.play();
+                addHistory(prizes[0], winners.join('、'));
+                nameInput.value = names.join('\n');
+                prizes.shift(); prizeInput.value=prizes.join('\n');
+                updateRaffleData();
+            } else {
+                if(names.length===0) return alert("名單空了");
+                if(prizes.length===0) return alert("沒獎品了");
+                isRaffleRolling=true;
+                drawBtn.textContent="停止！"; drawBtn.classList.add('rolling');
+                prizeDisplay.textContent=`🔥 正在抽出 ${drawCount} 位：${prizes[0]}`;
+                rollSound.currentTime=0; rollSound.play();
+                raffleTimer=setInterval(()=>{ raffleDisplay.textContent=names[Math.floor(Math.random()*names.length)]; },40);
+            }
+        }
+        function addHistory(p,w){
+             const id=historyData.length+1; historyData.unshift({id,prize:p,winner:w});
+             const div=document.createElement('div'); div.className='result-item';
+             div.innerHTML=`<span>#${id} ${p}</span><strong>${w}</strong>`;
+             resultList.querySelector('.result-header-group').insertAdjacentElement('afterend',div);
+        }
+        function copyToClipboard(){ /*...*/ }
+        function exportToExcel(){ /*...*/ }
+
+        // === [B] 遊戲邏輯 (智慧偵測版) ===
+        let gMin=1, gMax=100, secretCode=null, isGameOver=false;
+        let sheetUrl="", syncTimer=null, lastRow=0;
+
+        const rangeDisplay = document.getElementById('rangeDisplay');
+        const gameMessage = document.getElementById('gameMessage');
+        const gameInput = document.getElementById('gameInput');
+        const winnerOverlay = document.getElementById('winnerOverlay');
+        const boomNumber = document.getElementById('boomNumber');
+        const syncDot = document.getElementById('syncDot');
+        const syncText = document.getElementById('syncText');
+
+        function resetGame() {
+            gMin = parseInt(document.getElementById('minSet').value)||1;
+            gMax = parseInt(document.getElementById('maxSet').value)||100;
+            const sVal = document.getElementById('secretSet').value;
+            
+            if(sVal === "") {
+                secretCode = Math.floor(Math.random()*(gMax-gMin+1))+gMin;
+                logDebug("未設定密碼，已隨機生成");
+            } else {
+                secretCode = parseInt(sVal);
+                logDebug("密碼已鎖定為: " + secretCode);
+            }
+
+            isGameOver = false;
+            rangeDisplay.textContent = `${gMin} ~ ${gMax}`;
+            gameMessage.textContent = "";
+            winnerOverlay.style.display = 'none';
+            gameInput.value = "";
+            lastRow = 0;
+        }
+
+        function toggleGameMusic() { if(gameBg.paused) gameBg.play(); else gameBg.pause(); }
+
+        function makeGuess() {
+            if(isGameOver) return;
+            const val = parseInt(gameInput.value);
+            gameInput.value = "";
+            processGuess(val);
+        }
+
+        // 核心判斷
+        function processGuess(val) {
+            if(isNaN(val)) return;
+
+            // ★ 強制比對 (轉成數字比對，忽略型別)
+            if(Number(val) === Number(secretCode)) {
+                logDebug(`🎯 命中密碼！輸入:${val}, 答案:${secretCode}`);
+                gameWin();
+                return;
+            }
+
+            if(val <= gMin || val >= gMax) {
+                gameMessage.textContent = `無效：${val}`;
+                return;
+            }
+
+            if(val > secretCode) gMax = val;
+            else gMin = val;
+            
+            rangeDisplay.textContent = `${gMin} ~ ${gMax}`;
+            gameMessage.textContent = `最新數字：${val}`;
+            beepSound.currentTime=0; beepSound.play();
+            logDebug(`區間更新: ${gMin} ~ ${gMax}`);
+        }
+
+        function gameWin() {
+            isGameOver = true;
+            rangeDisplay.textContent = secretCode;
+            boomNumber.textContent = secretCode;
+            winnerOverlay.style.display = 'flex';
+            boomSound.currentTime=0; boomSound.play();
+            syncText.textContent = "🎉 恭喜答對！遊戲結束";
+        }
+        function closeOverlay() { winnerOverlay.style.display='none'; }
+
+        function updateSheetUrl() {
+            sheetUrl = document.getElementById('sheetUrl').value.trim();
+            if(sheetUrl.includes("http")) {
+                syncText.textContent = "🟢 雲端監聽中...";
+                syncDot.classList.add('active');
+                if(!syncTimer) syncTimer = setInterval(checkSheet, 2000); // 加快頻率
+            } else {
+                syncText.textContent = "🔴 雲端未連線";
+                syncDot.classList.remove('active');
+                if(syncTimer) { clearInterval(syncTimer); syncTimer=null; }
+            }
+        }
+
+        // ★ 智慧偵測核心
+        async function checkSheet() {
+            if(isGameOver || !sheetUrl) return;
+            try {
+                const res = await fetch(sheetUrl + "&t=" + Date.now());
+                const text = await res.text();
+                // 簡易 CSV 解析
+                const rows = text.split('\n').map(r => r.split(','));
+                const total = rows.length;
+                
+                if(total <= 1) return;
+                
+                if(total > lastRow) {
+                    if(lastRow === 0) { lastRow = total; return; } // 初次載入忽略舊資料
+
+                    // 取得最新一行
+                    const latestRow = rows[total-1];
+                    logDebug(`收到新資料 (行數:${total}): ${latestRow.join('|')}`);
+
+                    // ★ 智慧掃描：掃描整行，找出看起來像答案的數字
+                    let foundNumber = null;
+                    
+                    // 從後往前找 (通常最新的欄位在後面)
+                    for(let i = latestRow.length - 1; i >= 0; i--) {
+                        // 清理資料：去掉引號、空白
+                        let raw = latestRow[i].replace(/['"\s]+/g, ''); 
+                        let val = parseInt(raw);
+                        
+                        // 條件：必須是數字，且在合理範圍內 (1~999) 避免抓到 Timestamp
+                        if(!isNaN(val) && val < 1000 && val > 0) {
+                            foundNumber = val;
+                            break; // 找到就停止
+                        }
+                    }
+
+                    if(foundNumber !== null) {
+                        syncDot.style.background = "#FF5722";
+                        setTimeout(()=> syncDot.style.background = "#00E676", 500);
+                        logDebug(`解析出數字: ${foundNumber}`);
+                        processGuess(foundNumber);
+                    } else {
+                        logDebug("⚠️ 該行未發現有效數字");
+                    }
+                    
+                    lastRow = total;
+                }
+            } catch(e) { console.log(e); }
+        }
+    </script>
+</body>
+</html>
